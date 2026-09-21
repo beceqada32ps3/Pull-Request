@@ -1,0 +1,42 @@
+# This is a basic workflow to help you get started with Actions
+
+name: "Least Workflow Remote Event Engine"
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Automated daily cleanup trigger
+  workflow_dispatch:   # Manual single-click event trigger
+
+jobs:
+  cleanup-nodes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Node 4: Initialize Workspace Engine"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Node 1-3: Register Distributed Cluster Network"
+        run: |
+          # Safe mapping check for a full 4-node topology setup
+          git remote add upstream https://github.com 2>/dev/null || true
+          git remote add peer1 https://github.com 2>/dev/null || true
+          git remote -v
+
+      - name: "Execute 4-Node Remote Event & Branch Deletion Pipeline"
+        run: |
+          # 1. Sync and prune all tracking points simultaneously
+          git fetch --all --prune
+
+          # 2. Extract operational HEAD branch names across the nodes using sed
+          default_branch=$(git remote show upstream 2>/dev/null | sed -n 's/^[[:space:]]*HEAD branch:[[:space:]]*//p' || \
+                           git remote show origin 2>/dev/null | sed -n 's/^[[:space:]]*HEAD branch:[[:space:]]*//p' || \
+                           echo "main")
+
+          # 3. Clean local branch strings and execute safe deletion
+          git branch --no-color --merged | \
+            grep -vE "^(\*|\+)" | \
+            sed 's/^[[:space:]]*//' | \
+            grep -E -v "^(${default_branch}|main|master|trunk|svn)$" | \
+            xargs -r git branch -d
+
